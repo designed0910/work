@@ -1,0 +1,67 @@
+import os
+import shutil
+import re
+#文件名格式为：20220223-农业农村-方案-产德镇村庄清洁行动春季战役活动方案-刘博洋初稿.docx
+# 设置文件夹路径
+folder_path = r'C:\Users\Design\Desktop\demo'
+
+# 正则表达式来匹配文件名中的年度、大类和小类
+pattern = re.compile(r'(\d{8})-(\w+)(?:-(\w+))?-.+')
+
+
+# 函数：删除空文件夹
+def remove_empty_folders(path):
+    for root, dirs, files in os.walk(path, topdown=False):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            if not os.listdir(dir_path):  # 检查文件夹是否为空
+                os.rmdir(dir_path)  # 删除空文件夹
+
+
+# 遍历文件夹及其所有子文件夹中的所有文件
+for root, dirs, files in os.walk(folder_path):
+    for filename in files:
+        file_path = os.path.join(root, filename)
+
+        # 使用正则表达式匹配文件名
+        match = pattern.search(filename)
+        if match:
+            date_str, category_major, category_minor = match.groups()
+
+            # 检查大类是否为“模板”
+            if category_major == "模板":
+                # 创建模板文件夹
+                template_folder = os.path.join(folder_path, category_major)
+                if not os.path.exists(template_folder):
+                    os.makedirs(template_folder)
+
+                # 移动文件到模板文件夹
+                shutil.move(file_path, os.path.join(template_folder, filename))
+            else:
+                year = date_str[:4]  # 提取年份
+
+                # 创建年度文件夹
+                year_folder = os.path.join(folder_path, year)
+                if not os.path.exists(year_folder):
+                    os.makedirs(year_folder)
+
+                # 创建大类文件夹
+                major_folder = os.path.join(year_folder, category_major)
+                if not os.path.exists(major_folder):
+                    os.makedirs(major_folder)
+
+                # 如果有小类，创建小类子文件夹
+                if category_minor:
+                    minor_folder = os.path.join(major_folder, category_minor)
+                    if not os.path.exists(minor_folder):
+                        os.makedirs(minor_folder)
+                    # 移动文件到对应的小类子文件夹
+                    shutil.move(file_path, os.path.join(minor_folder, filename))
+                else:
+                    # 如果没有小类，直接移动到大类文件夹
+                    shutil.move(file_path, os.path.join(major_folder, filename))
+
+# 删除所有空文件夹
+remove_empty_folders(folder_path)
+
+print("文件分类完成，并已删除所有空文件夹。")
