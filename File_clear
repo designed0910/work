@@ -1,13 +1,18 @@
 import os
 import shutil
 import re
-#文件名格式为：20220223-农业农村-方案-产德镇村庄清洁行动春季战役活动方案-刘博洋初稿.docx
-# 设置文件夹路径
-folder_path = r'C:\Users\Design\Desktop\demo'
 
-# 正则表达式来匹配文件名中的年度、大类和小类
+# 文件夹路径
+
+import os
+import shutil
+import re
+
+# 文件夹路径
+folder_path = r'C:\ba1yu\Desktop\demo1'
+
+# 正则表达式匹配文件名中的年度、大类和小类
 pattern = re.compile(r'(\d{8})-(\w+)(?:-(\w+))?-.+')
-
 
 # 函数：删除空文件夹
 def remove_empty_folders(path):
@@ -17,51 +22,85 @@ def remove_empty_folders(path):
             if not os.listdir(dir_path):  # 检查文件夹是否为空
                 os.rmdir(dir_path)  # 删除空文件夹
 
+# 函数：分类文件
+def classify_file(file_path):
+    # 使用正则表达式匹配文件名
+    match = pattern.match(os.path.basename(file_path))
+    if match:
+        date_str, category_major, category_minor = match.groups()
+
+        # 检查大类是否为“模板”
+        if category_major == "模板":
+            # 创建模板文件夹
+            template_folder = os.path.join(folder_path, category_major)
+            if not os.path.exists(template_folder):
+                os.makedirs(template_folder)
+
+            # 移动文件到模板文件夹
+            shutil.move(file_path, os.path.join(template_folder, os.path.basename(file_path)))
+        else:
+            year = date_str[:4]  # 提取年份
+
+            # 创建年度文件夹
+            year_folder = os.path.join(folder_path, year)
+            if not os.path.exists(year_folder):
+                os.makedirs(year_folder)
+
+            # 创建大类文件夹
+            major_folder = os.path.join(year_folder, category_major)
+            if not os.path.exists(major_folder):
+                os.makedirs(major_folder)
+
+            # 如果有小类，创建小类子文件夹
+            if category_minor:
+                minor_folder = os.path.join(major_folder, category_minor)
+                if not os.path.exists(minor_folder):
+                    os.makedirs(minor_folder)
+                # 移动文件到对应的小类子文件夹
+                shutil.move(file_path, os.path.join(minor_folder, os.path.basename(file_path)))
+            else:
+                # 如果没有小类，直接移动到大类文件夹
+                shutil.move(file_path, os.path.join(major_folder, os.path.basename(file_path)))
 
 # 遍历文件夹及其所有子文件夹中的所有文件
 for root, dirs, files in os.walk(folder_path):
     for filename in files:
         file_path = os.path.join(root, filename)
-
-        # 使用正则表达式匹配文件名
-        match = pattern.search(filename)
-        if match:
-            date_str, category_major, category_minor = match.groups()
-
-            # 检查大类是否为“模板”
-            if category_major == "模板":
-                # 创建模板文件夹
-                template_folder = os.path.join(folder_path, category_major)
-                if not os.path.exists(template_folder):
-                    os.makedirs(template_folder)
-
-                # 移动文件到模板文件夹
-                shutil.move(file_path, os.path.join(template_folder, filename))
-            else:
-                year = date_str[:4]  # 提取年份
-
-                # 创建年度文件夹
-                year_folder = os.path.join(folder_path, year)
-                if not os.path.exists(year_folder):
-                    os.makedirs(year_folder)
-
-                # 创建大类文件夹
-                major_folder = os.path.join(year_folder, category_major)
-                if not os.path.exists(major_folder):
-                    os.makedirs(major_folder)
-
-                # 如果有小类，创建小类子文件夹
-                if category_minor:
-                    minor_folder = os.path.join(major_folder, category_minor)
-                    if not os.path.exists(minor_folder):
-                        os.makedirs(minor_folder)
-                    # 移动文件到对应的小类子文件夹
-                    shutil.move(file_path, os.path.join(minor_folder, filename))
-                else:
-                    # 如果没有小类，直接移动到大类文件夹
-                    shutil.move(file_path, os.path.join(major_folder, filename))
+        # 只对文件进行分类
+        if os.path.isfile(file_path):
+            classify_file(file_path)
 
 # 删除所有空文件夹
 remove_empty_folders(folder_path)
 
 print("文件分类完成，并已删除所有空文件夹。")
+
+
+import os
+import shutil
+
+def classify_folders(root_folder):
+    # 遍历根目录下的所有文件夹
+    for folder_name in os.listdir(root_folder):
+        folder_path = os.path.join(root_folder, folder_name)
+        # 确保是文件夹
+        if os.path.isdir(folder_path):
+            # 解析文件夹名称以获取分类信息
+            parts = folder_name.split('-')
+            if len(parts) >= 4:
+                # 提取日期部分，并假设日期格式为YYYYMMDD
+                date_str = parts[0]
+                year = date_str[:4]  # 提取年份
+                category = parts[1]  # 提取大类
+                subcategory = parts[2]  # 提取小类
+                # 创建目标路径
+                target_path = os.path.join(root_folder, year, category, subcategory)
+                # 确保目标路径存在
+                os.makedirs(target_path, exist_ok=True)
+                # 移动文件夹到目标路径
+                shutil.move(folder_path, os.path.join(target_path, folder_name))
+    print("文件夹分类完成。")
+
+# 指定你想要分类的根目录路径
+root_folder = r'C:\ba1yu\Desktop\demo1'
+classify_folders(root_folder)
